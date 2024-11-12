@@ -3,6 +3,7 @@ import pymysql
 import requests
 import osmnx as ox
 import multiprocessing as mp
+import pandas as pd
 
 from .config import *
 
@@ -117,3 +118,25 @@ def parallel_fetch_pois(locations_dict: dict, tags: dict, distance_km: float = 1
 
         results = p.starmap(fetch_pois, inputs)
     return [a for a in zip(locations_dict.keys(), results)]
+
+def bbox_of(lat, long, distance_km):
+   """Returns an approx bbox of the form (N, S, E, W) with specified width and height."""
+
+   d = distance_km / 111 / 2
+   return (lat+d, lat-d, long+d, long-d)
+
+def get_price_paid_data_in_regions(conn, bbox, from_date, columns):
+    """Use provided DB connection to get price paid data within the given bounding box."""
+    
+    cur = conn.cursor()
+    subquery = f"SELECT {', '.join(columns)}, " + \
+                "ROW_NUMBER() OVER (PARTITION BY pp.postcode, street, primary_addressable_object_name ORDER BY date_of_transfer DESC) AS row_num " + \
+                "FROM pp_data pp JOIN postcode_data po ON pp.postcode = po.postcode " + \
+                f"WHERE po.latitude BETWEEN {bbox[1]} AND {bbox[0]} AND po.longitude BETWEEN {bbox[3]} AND {bbox[2]} " + \
+                f"AND date_of_transfer >= '{from_date}'"
+                
+    cur.execute(f"SELECT {', '.join(columns)} FROM ({subquery}) AS ranked WHERE row_num = 1;")
+
+    rows = cur.fetchall()
+    df = pd.DataFrame(rows, columns=[x[0].split(".")[-1] for x in cur.description])
+    return df
