@@ -93,3 +93,41 @@ def plot_distance_matrix_heatmap(names, data, label):
     plt.xlabel(label)
     plt.ylabel(label)
     plt.show()
+
+def join_osm_data_to_pp_data(osm_data, pp_data):
+    """Join OSM data and PP data on housenumber, street, and postcode"""
+    
+    # Create filtered OSM df with min, max house number columns
+    # and the street column capitalised to match pp_data
+
+    with_house_no = osm_data["addr:housenumber"].str.isnumeric()
+    with_house_range = osm_data["addr:housenumber"].str.match(r"^[\d]+-[\d]+")
+    
+    osm_matchable = osm_data[with_house_no | with_house_range].copy()
+
+    house_no = osm_matchable["addr:housenumber"]
+    osm_matchable["min"] = house_no
+    osm_matchable["max"] = house_no
+
+    split_min_max = house_no[with_house_range].str.split("-", expand=True)
+    osm_matchable.loc[with_house_range, ["min", "max"]] = split_min_max.values
+
+    osm_matchable["min"] = pd.to_numeric(osm_matchable["min"])
+    osm_matchable["max"] = pd.to_numeric(osm_matchable["max"])
+
+    osm_matchable["street"] = osm_matchable["addr:street"].str.upper()
+    osm_matchable["postcode"] = osm_matchable["addr:postcode"]
+
+    # Create filtered PP df with numeric house number
+
+    house_number = pp_data["primary_addressable_object_name"].str.isnumeric()
+    pp_matchable = pp_data[house_number & pp_data["street"].notna() & pp_data["postcode"].notna()]
+
+    pp_matchable["housenumber"] = pd.to_numeric(pp_matchable["primary_addressable_object_name"])
+
+    # Join the two dataframes
+
+    merged = pd.merge(osm_matchable, pp_matchable, on=["postcode", "street"])
+    merged = merged.loc[(merged["housenumber"] >= merged["min"]) & (merged["housenumber"] <= merged["max"])]
+    
+    return merged

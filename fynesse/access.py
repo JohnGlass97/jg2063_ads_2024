@@ -140,3 +140,28 @@ def get_price_paid_data_in_regions(conn, bbox, from_date, columns):
     rows = cur.fetchall()
     df = pd.DataFrame(rows, columns=[x[0].split(".")[-1] for x in cur.description])
     return df
+
+def get_buildings_with_addresses(bbox):
+    """Returns OSM buildings with housenumber, street, and postcode."""
+    
+    tags = {
+        "building": True,
+    }
+
+    buildings = ox.features_from_bbox(bbox=bbox, tags=tags)
+    buildings["area"] = buildings.to_crs({'init': 'epsg:32633'})["geometry"].area
+
+    COLUMNS = ["geometry", "addr:city", "addr:housenumber",
+        "addr:postcode", "addr:street", "name", "addr:housename",
+        "addr:country", "nodes", "building", "ways", "type", "area",
+    ]
+
+    buildings = buildings[COLUMNS]
+
+    has_full_address = (buildings["addr:housenumber"].notna()) & \
+                        (buildings["addr:street"].notna()) & \
+                        (buildings["addr:postcode"].notna())
+
+    with_address = buildings[has_full_address]
+
+    return with_address
