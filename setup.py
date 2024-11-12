@@ -35,6 +35,8 @@ REQUIRED = [
     "pymysql",
     "osmnx",
     "multiprocess",
+    "seaborn",
+    "sklearn",
 ]
 
 # What packages are optional?

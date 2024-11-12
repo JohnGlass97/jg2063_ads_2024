@@ -1,4 +1,7 @@
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics.pairwise import euclidean_distances
 
 from .config import *
 
@@ -72,3 +75,21 @@ def count_pois_near_coordinates(pois, tags: dict) -> dict:
                  poi_counts[f"{tag}:{sub_tag}"] = (df[tag]==sub_tag).sum()
 
     return poi_counts
+
+def plot_distance_matrix_heatmap(names, data, label):
+    """
+    Plot a distance matrix for ehd provided data.
+    Args:
+        names (list): List of strings to label the rows and columns.
+        data (df): Dataframe where rows are vectors.
+        label (string): Label for x and y axes.
+    """
+    
+    dist_matrix = euclidean_distances(data)
+    pd.DataFrame(dist_matrix, columns=names, index=names)
+
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(dist_matrix, annot=True, cmap="viridis", cbar=True, xticklabels=names, yticknames=names)
+    plt.xlabel(label)
+    plt.ylabel(label)
+    plt.show()
