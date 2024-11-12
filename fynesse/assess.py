@@ -1,3 +1,5 @@
+import pandas as pd
+
 from .config import *
 
 from . import access
@@ -29,3 +31,44 @@ def view(data):
 def labelled(data):
     """Provide a labelled set of data ready for supervised learning."""
     raise NotImplementedError
+
+def gdf_to_df(gdf):
+    """
+    Takes a geopandas dataframe and returns a pandas dataframe
+    that is more suitable for ML.
+    Args:
+        gdf: geopandas dataframe.
+    Returns:
+        df: Pandas dataframe.
+    """
+    df = pd.DataFrame(gdf)
+
+    df['latitude'] = df.apply(lambda row: row.geometry.centroid.y, axis=1)
+    df['longitude'] = df.apply(lambda row: row.geometry.centroid.x, axis=1)
+
+    return df
+
+def count_pois_near_coordinates(pois, tags: dict) -> dict:
+    """
+    Count each type of Points of Interest (POI).
+    Args:
+        pois (gdf): Points of interest.
+        tags (dict): A dictionary of OSM tags to filter the POIs (e.g., {'amenity': True, 'tourism': True}).
+        distance_km (float): The distance around the location in kilometers. Default is 1 km.
+    Returns:
+        dict: A dictionary where keys are the OSM tags and values are the counts of POIs for each tag.
+    """
+    df = gdf_to_df(pois)
+
+    poi_counts = {}
+
+    for tag, value in tags.items():
+        if tag not in df.columns:
+            poi_counts[tag] = 0
+        elif value == True:
+            poi_counts[tag] = df[tag].notnull().sum()
+        else:
+            for sub_tag in value:
+                 poi_counts[f"{tag}:{sub_tag}"] = (df[tag]==sub_tag).sum()
+
+    return poi_counts
