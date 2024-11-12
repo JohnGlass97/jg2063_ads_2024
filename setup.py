@@ -36,7 +36,7 @@ REQUIRED = [
     "osmnx",
     "multiprocess",
     "seaborn",
-    "sklearn",
+    "scikit-learn",
 ]
 
 # What packages are optional?
