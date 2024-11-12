@@ -1,6 +1,8 @@
 import csv
 import pymysql
 import requests
+import osmnx as ox
+import multiprocessing as mp
 
 from .config import *
 
@@ -80,3 +82,38 @@ def housing_upload_join_data(conn, year):
     cur.execute(f"LOAD DATA LOCAL INFILE '" + csv_file_path + "' INTO TABLE `prices_coordinates_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY '' TERMINATED BY '\n';")
     conn.commit()
     print('Data stored for year: ' + str(year))
+
+def fetch_pois(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0):
+    """
+    Fetch Points of Interest (POIs) near a given pair of coordinates within a specified distance.
+    Args:
+        latitude (float): Latitude of the location.
+        longitude (float): Longitude of the location.
+        tags (dict): A dictionary of OSM tags to filter the POIs (e.g., {'amenity': True, 'tourism': True}).
+        distance_km (float): The distance around the location in kilometers. Default is 1 km.
+    Returns:
+        gdf: A geopandas dataframe of the POIs.
+    """
+    point = latitude, longitude
+    radius = distance_km * 1000
+
+    features = ox.features_from_point(point, tags, radius)
+    print("-", end="") # To signify progress
+
+    return features
+
+def parallel_fetch_pois(locations_dict: dict, tags: dict, distance_km: float = 1.0):
+    """
+    Fetch Points of Interest (POIs) near each given pair of coordinates within a specified distance.
+    Args:
+        locations_dict (dict): A dictionary of names to latitude longitude tuples.
+        tags (dict): A dictionary of OSM tags to filter the POIs (e.g., {'amenity': True, 'tourism': True}).
+        distance_km (float): The distance around the location in kilometers. Default is 1 km.
+    Returns:
+        gdf_dict: A dict of geopandas dataframe of the POIs.
+    """
+    with mp.Pool(len(locations_dict)) as p:
+        inputs = [(x, y, tags, distance_km) for (x, y) in locations_dict.values()]
+
+        results = p.starmap(fetch_pois, inputs)
+    return [a for a in zip(locations_dict.keys(), results)]

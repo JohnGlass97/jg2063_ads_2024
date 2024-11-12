@@ -33,6 +33,8 @@ REQUIRED = [
     "matplotlib",
     "requests",
     "pymysql",
+    "osmnx",
+    "multiprocess",
 ]
 
 # What packages are optional?
