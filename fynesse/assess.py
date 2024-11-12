@@ -101,16 +101,16 @@ def join_osm_data_to_pp_data(osm_data, pp_data):
     # and the street column capitalised to match pp_data
 
     with_house_no = osm_data["addr:housenumber"].str.isnumeric()
-    with_house_range = osm_data["addr:housenumber"].str.match(r"^[\d]+-[\d]+")
+    # with_house_range = osm_data["addr:housenumber"].str.match(r"^[\d]+-[\d]+")
     
-    osm_matchable = osm_data[with_house_no | with_house_range].copy()
+    osm_matchable = osm_data[with_house_no].copy()
 
     house_no = osm_matchable["addr:housenumber"]
     osm_matchable["min"] = house_no
     osm_matchable["max"] = house_no
 
-    split_min_max = house_no[with_house_range].str.split("-", expand=True)
-    osm_matchable.loc[with_house_range, ["min", "max"]] = split_min_max.values
+    # split_min_max = house_no[with_house_range].str.split("-", expand=True)
+    # osm_matchable.loc[with_house_range, ["min", "max"]] = split_min_max.values
 
     osm_matchable["min"] = pd.to_numeric(osm_matchable["min"])
     osm_matchable["max"] = pd.to_numeric(osm_matchable["max"])
