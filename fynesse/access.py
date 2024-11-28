@@ -1,4 +1,6 @@
 import csv
+import io
+import zipfile
 import pymysql
 import requests
 import osmnx as ox
@@ -63,23 +65,28 @@ def housing_upload_join_data(conn: pymysql.Connection, year: int) -> None:
     end_date = str(year) + "-12-31"
 
     cur = conn.cursor()
-    print('Selecting data for year: ' + str(year))
-    cur.execute(f'SELECT pp.price, pp.date_of_transfer, po.postcode, pp.property_type, pp.new_build_flag, pp.tenure_type, pp.locality, pp.town_city, pp.district, pp.county, po.country, po.latitude, po.longitude FROM (SELECT price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality, town_city, district, county FROM pp_data WHERE date_of_transfer BETWEEN "' +
-                start_date + '" AND "' + end_date + '") AS pp INNER JOIN postcode_data AS po ON pp.postcode = po.postcode')
+    print("Selecting data for year: " + str(year))
+    cur.execute("""SELECT pp.price, pp.date_of_transfer, po.postcode, pp.property_type, pp.new_build_flag, pp.tenure_type,
+                pp.locality, pp.town_city, pp.district, pp.county, po.country, po.latitude, po.longitude
+                FROM (
+                    SELECT price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality, town_city,
+                    district, county FROM pp_data """ +
+                f"WHERE date_of_transfer BETWEEN {start_date} AND {end_date}" +
+                ") AS pp INNER JOIN postcode_data AS po ON pp.postcode = po.postcode")
     rows = cur.fetchall()
 
-    csv_file_path = 'output_file.csv'
+    csv_file_path = "output_file.csv"
 
     # Write the rows to the CSV file
     with open(csv_file_path, 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
         # Write the data rows
         csv_writer.writerows(rows)
-    print('Storing data for year: ' + str(year))
+    print("Storing data for year: " + str(year))
     cur.execute(f"LOAD DATA LOCAL INFILE '" + csv_file_path +
                 "' INTO TABLE `prices_coordinates_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY '' TERMINATED BY '\n';")
     conn.commit()
-    print('Data stored for year: ' + str(year))
+    print("Data stored for year: " + str(year))
 
 
 def fetch_pois(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0):
@@ -133,14 +140,14 @@ def get_price_paid_data_in_regions(conn: pymysql.Connection, bbox: tuple, from_d
     """Use provided DB connection to get price paid data within the given bounding box.
     Note that the bbox is approximated and only accurate at the equator."""
 
-    subquery = f"SELECT {', '.join(columns)}, pp.postcode AS postcode, " + \
-        "ROW_NUMBER() OVER (PARTITION BY pp.postcode, street, primary_addressable_object_name ORDER BY date_of_transfer DESC) AS row_num " + \
-        "FROM pp_data pp JOIN postcode_data po ON pp.postcode = po.postcode " + \
-        f"WHERE po.latitude BETWEEN {bbox[1]} AND {bbox[0]} AND po.longitude BETWEEN {bbox[3]} AND {bbox[2]} " + \
-        f"AND date_of_transfer >= '{from_date}'"
+    subquery = (f"SELECT {', '.join(columns)}, pp.postcode AS postcode, " + """
+        ROW_NUMBER() OVER (PARTITION BY pp.postcode, street, primary_addressable_object_name ORDER BY date_of_transfer DESC) AS row_num
+        FROM pp_data pp JOIN postcode_data po ON pp.postcode = po.postcode
+        """ + f"WHERE po.latitude BETWEEN {bbox[1]} AND {bbox[0]} AND po.longitude BETWEEN {bbox[3]} AND {bbox[2]} " +
+                f"AND date_of_transfer >= '{from_date}'")
 
-    query = f"SELECT {', '.join(columns)}, postcode FROM ({
-        subquery}) AS ranked WHERE row_num = 1;"
+    query = f"SELECT {', '.join(columns)}, postcode FROM ({subquery})" + \
+        "AS ranked WHERE row_num = 1;"
 
     return get_df_from_query(conn, query)
 
