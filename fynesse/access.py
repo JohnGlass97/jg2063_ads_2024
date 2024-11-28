@@ -177,3 +177,54 @@ def get_buildings_with_addresses(bbox: tuple):
     with_address = buildings[has_full_address]
 
     return with_address
+
+
+def download_census_data(code: str, base_dir="") -> None:
+    """Download the 2021 census data for the given code and extract it to the base directory."""
+
+    url = "https://www.nomisweb.co.uk/output/census/2021/census2021-" + \
+        f"{code.lower()}.zip"
+    extract_dir = os.path.join(
+        base_dir, os.path.splitext(os.path.basename(url))[0])
+
+    if os.path.exists(extract_dir) and os.listdir(extract_dir):
+        print(f"Files already exist at: {extract_dir}.")
+        return
+
+    os.makedirs(extract_dir, exist_ok=True)
+    response = requests.get(url)
+    response.raise_for_status()
+
+    with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
+        zip_ref.extractall(extract_dir)
+
+    print(f"Files extracted to: {extract_dir}")
+
+
+def load_census_data(code: str, level="msoa") -> pd.DataFrame:
+    """Load the 2021 census data for the given code and level."""
+    return pd.read_csv(f"census2021-{code.lower()}/census2021-{code.lower()}-{level}.csv")
+
+
+def fetch_age_distributions() -> pd.DataFrame:
+    """Fetch the age distribution data from the 2021 census."""
+
+    download_census_data("TS007")  # Age by single year of age
+
+    age_df = load_census_data("TS007")
+    # Preparing the columns we want
+    age_df = age_df.drop(age_df.columns[[
+                         0, 2, 3, 4, 10, 16, 23, 28, 34, 45, 61, 77, 88, 99, 115]], axis=1).set_index("geography")
+    age_df.columns = list(range(100))
+    return age_df
+
+
+def fetch_ns_sec() -> pd.DataFrame:
+    """Fetch the National Statistics Socio-economic Classification (NS-SEC) data from the 2021 census."""
+
+    download_census_data("TS062")
+
+    ts062_df = load_census_data("TS062', level='oa")
+    ts062_df.columns = [x.lstrip(
+        "National Statistics Socio-economic Classification (NS-SEC):") for x in ts062_df.columns]
+    return ts062_df
