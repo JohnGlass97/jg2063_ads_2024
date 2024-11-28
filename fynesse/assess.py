@@ -7,6 +7,7 @@ from .config import *
 
 # This file contains code for addressing questions in the data
 
+
 def gdf_to_df(gdf):
     """
     Takes a geopandas dataframe and returns a pandas dataframe
@@ -22,6 +23,7 @@ def gdf_to_df(gdf):
     df['longitude'] = df.apply(lambda row: row.geometry.centroid.x, axis=1)
 
     return df
+
 
 def count_pois_near_coordinates(pois, tags: dict) -> dict:
     """
@@ -44,9 +46,10 @@ def count_pois_near_coordinates(pois, tags: dict) -> dict:
             poi_counts[tag] = df[tag].notnull().sum()
         else:
             for sub_tag in value:
-                 poi_counts[f"{tag}:{sub_tag}"] = (df[tag]==sub_tag).sum()
+                poi_counts[f"{tag}:{sub_tag}"] = (df[tag] == sub_tag).sum()
 
     return poi_counts
+
 
 def plot_distance_matrix_heatmap(names, data, label):
     """
@@ -56,25 +59,27 @@ def plot_distance_matrix_heatmap(names, data, label):
         data (df): Dataframe where rows are vectors.
         label (string): Label for x and y axes.
     """
-    
+
     dist_matrix = euclidean_distances(data)
     pd.DataFrame(dist_matrix, columns=names, index=names)
 
     plt.figure(figsize=(8, 6))
-    sns.heatmap(dist_matrix, annot=True, cmap="viridis", cbar=True, xticklabels=names, yticknames=names)
+    sns.heatmap(dist_matrix, annot=True, cmap="viridis",
+                cbar=True, xticklabels=names, yticknames=names)
     plt.xlabel(label)
     plt.ylabel(label)
     plt.show()
 
+
 def join_osm_data_to_pp_data(osm_data, pp_data):
     """Join OSM data and PP data on housenumber, street, and postcode"""
-    
+
     # Create filtered OSM df with min, max house number columns
     # and the street column capitalised to match pp_data
 
     with_house_no = osm_data["addr:housenumber"].str.isnumeric()
     # with_house_range = osm_data["addr:housenumber"].str.match(r"^[\d]+-[\d]+")
-    
+
     osm_matchable = osm_data[with_house_no].copy()
 
     house_no = osm_matchable["addr:housenumber"]
@@ -93,13 +98,16 @@ def join_osm_data_to_pp_data(osm_data, pp_data):
     # Create filtered PP df with numeric house number
 
     house_number = pp_data["primary_addressable_object_name"].str.isnumeric()
-    pp_matchable = pp_data[house_number & pp_data["street"].notna() & pp_data["postcode"].notna()]
+    pp_matchable = pp_data[house_number &
+                           pp_data["street"].notna() & pp_data["postcode"].notna()]
 
-    pp_matchable["housenumber"] = pd.to_numeric(pp_matchable["primary_addressable_object_name"])
+    pp_matchable["housenumber"] = pd.to_numeric(
+        pp_matchable["primary_addressable_object_name"])
 
     # Join the two dataframes
 
     merged = pd.merge(osm_matchable, pp_matchable, on=["postcode", "street"])
-    merged = merged.loc[(merged["housenumber"] >= merged["min"]) & (merged["housenumber"] <= merged["max"])]
-    
+    merged = merged.loc[(merged["housenumber"] >= merged["min"]) & (
+        merged["housenumber"] <= merged["max"])]
+
     return merged
