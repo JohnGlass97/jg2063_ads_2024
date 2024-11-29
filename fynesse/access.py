@@ -213,7 +213,7 @@ def fetch_age_distributions(level: str) -> pd.DataFrame:
 
     age_df = load_census_data("TS007", level)
     age_df = age_df.drop(age_df.columns[[
-                         0, 2, 3, 4, 10, 16, 23, 28, 34, 45, 61, 77, 88, 99, 115]], axis=1).set_index("geography")
+                         0, 3, 4, 10, 16, 23, 28, 34, 45, 61, 77, 88, 99, 115]], axis=1).set_index("geography")
     age_df.columns = list(range(100))
     return age_df
 
@@ -224,8 +224,7 @@ def fetch_ns_sec(level: str) -> pd.DataFrame:
     download_census_data("TS062")
 
     ns_sec_df = load_census_data("TS062", level)
-    ns_sec_df = ns_sec_df.drop(
-        ["date", "geography code"], axis=1).set_index('geography')
+    ns_sec_df = ns_sec_df.drop("date", axis=1).set_index("geography")
     ns_sec_df.columns = [x.replace(
         "National Statistics Socio-economic Classification (NS-SEC): ", "") for x in ns_sec_df.columns]
     return ns_sec_df
@@ -238,7 +237,7 @@ def fetch_general_health(level: str) -> pd.DataFrame:
 
     general_health_df = load_census_data('TS037', level)
     general_health_df = general_health_df.drop(
-        ["date", "geography code"], axis=1).set_index('geography')
+        "date", axis=1).set_index("geography")
     general_health_df.columns = [
         x.replace("General health: ", "") for x in general_health_df.columns]
     return general_health_df
