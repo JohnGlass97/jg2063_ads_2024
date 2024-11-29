@@ -61,6 +61,8 @@ def get_df_from_query(conn: pymysql.Connection, query: str) -> pd.DataFrame:
 
 
 def housing_upload_join_data(conn: pymysql.Connection, year: int) -> None:
+    """Upload the price paid data for the given year to the database and join it with the postcode data."""
+
     start_date = str(year) + "-01-01"
     end_date = str(year) + "-12-31"
 
