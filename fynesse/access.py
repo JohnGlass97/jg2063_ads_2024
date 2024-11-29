@@ -241,3 +241,18 @@ def fetch_general_health(level: str) -> pd.DataFrame:
     general_health_df.columns = [
         x.replace("General health: ", "") for x in general_health_df.columns]
     return general_health_df
+
+
+def fetch_output_area_data() -> pd.DataFrame:
+    """Fetch Census Output Area data including coordinates."""
+
+    url = "https://open-geography-portalx-ons.hub.arcgis.com/" + \
+        "api/download/v1/items/6beafcfd9b9c4c9993a06b6b199d7e6d/csv?layers=0"
+
+    response = requests.get(url)
+    response.raise_for_status()
+
+    oa_data_df = pd.read_csv(io.StringIO(response.text))
+    oa_data_df = oa_data_df.set_index("FID")
+
+    return oa_data_df
