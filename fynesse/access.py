@@ -201,30 +201,44 @@ def download_census_data(code: str, base_dir="") -> None:
     print(f"Files extracted to: {extract_dir}")
 
 
-def load_census_data(code: str, level="msoa") -> pd.DataFrame:
+def load_census_data(code: str, level: str) -> pd.DataFrame:
     """Load the 2021 census data for the given code and level."""
     return pd.read_csv(f"census2021-{code.lower()}/census2021-{code.lower()}-{level}.csv")
 
 
-def fetch_age_distributions() -> pd.DataFrame:
+def fetch_age_distributions(level: str) -> pd.DataFrame:
     """Fetch the age distribution data from the 2021 census."""
 
     download_census_data("TS007")  # Age by single year of age
 
-    age_df = load_census_data("TS007")
-    # Preparing the columns we want
+    age_df = load_census_data("TS007", level)
     age_df = age_df.drop(age_df.columns[[
                          0, 2, 3, 4, 10, 16, 23, 28, 34, 45, 61, 77, 88, 99, 115]], axis=1).set_index("geography")
     age_df.columns = list(range(100))
     return age_df
 
 
-def fetch_ns_sec() -> pd.DataFrame:
+def fetch_ns_sec(level: str) -> pd.DataFrame:
     """Fetch the National Statistics Socio-economic Classification (NS-SEC) data from the 2021 census."""
 
     download_census_data("TS062")
 
-    ts062_df = load_census_data("TS062', level='oa")
-    ts062_df.columns = [x.lstrip(
-        "National Statistics Socio-economic Classification (NS-SEC):") for x in ts062_df.columns]
-    return ts062_df
+    ns_sec_df = load_census_data("TS062", level)
+    ns_sec_df = ns_sec_df.drop(
+        ["date", "geography code"], axis=1).set_index('geography')
+    ns_sec_df.columns = [x.replace(
+        "National Statistics Socio-economic Classification (NS-SEC): ", "") for x in ns_sec_df.columns]
+    return ns_sec_df
+
+
+def fetch_general_health(level: str) -> pd.DataFrame:
+    """Fetch the general health data from the 2021 census."""
+
+    download_census_data('TS037')
+
+    general_health_df = load_census_data('TS037', level)
+    general_health_df = general_health_df.drop(
+        ["date", "geography code"], axis=1).set_index('geography')
+    general_health_df.columns = [
+        x.replace("General health: ", "") for x in general_health_df.columns]
+    return general_health_df
