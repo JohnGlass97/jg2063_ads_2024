@@ -111,22 +111,14 @@ def fetch_pois(latitude: float, longitude: float, tags: dict, distance_km: float
     return features
 
 
-def parallel_fetch_pois(locations_dict: dict, tags: dict, distance_km: float = 1.0):
-    """
-    Fetch Points of Interest (POIs) near each given pair of coordinates within a specified distance.
-    Args:
-        locations_dict (dict): A dictionary of names to latitude longitude tuples.
-        tags (dict): A dictionary of OSM tags to filter the POIs (e.g., {'amenity': True, 'tourism': True}).
-        distance_km (float): The distance around the location in kilometers. Default is 1 km.
-    Returns:
-        gdf_dict: A dict of geopandas dataframe of the POIs.
-    """
-    with mp.Pool(len(locations_dict)) as p:
-        inputs = [(x, y, tags, distance_km)
-                  for (x, y) in locations_dict.values()]
+def parallel_map_dict(input_dict: dict, f, thread_count: int) -> dict:
+    """Map a function f over a dictionary in parallel using thread_count threads."""
+    keys, values = zip(*input_dict.items())
 
-        results = p.starmap(fetch_pois, inputs)
-    return [a for a in zip(locations_dict.keys(), results)]
+    with mp.Pool(thread_count) as p:
+        results = p.starmap(f, values)
+
+    return {k: v for k, v in zip(keys, results)}
 
 
 def bbox_of(lat: float, long: float, distance_km: float) -> tuple:
