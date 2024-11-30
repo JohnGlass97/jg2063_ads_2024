@@ -91,6 +91,20 @@ def housing_upload_join_data(conn: pymysql.Connection, year: int) -> None:
     print("Data stored for year: " + str(year))
 
 
+def upload_df_to_db(conn: pymysql.Connection, df: pd.DataFrame, table_name: str) -> None:
+    """Upload a pandas dataframe to the database as a table."""
+
+    cur = conn.cursor()
+    csv_file_path = "output_file.csv"
+
+    df.to_csv(csv_file_path)
+
+    cur.execute(f"LOAD DATA LOCAL INFILE '{csv_file_path}' INTO TABLE `{table_name}` " +
+                "FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY " +
+                "'' TERMINATED BY '\n';")
+    conn.commit()
+
+
 def fetch_pois(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0):
     """
     Fetch Points of Interest (POIs) near a given pair of coordinates within a specified distance.
