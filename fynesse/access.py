@@ -282,6 +282,6 @@ def fetch_output_area_data() -> pd.DataFrame:
     response.raise_for_status()
 
     oa_data_df = pd.read_csv(io.StringIO(response.text))
-    oa_data_df = oa_data_df.set_index("FID")
+    oa_data_df = oa_data_df.set_index("OA21CD")
 
     return oa_data_df
