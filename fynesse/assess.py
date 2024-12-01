@@ -40,12 +40,13 @@ def count_pois_near_coordinates(pois, tags: dict) -> dict:
     poi_counts = {}
 
     for tag, value in tags.items():
-        if tag not in df.columns:
-            poi_counts[tag] = 0
-        elif value == True:
+        if value == True:
+            if tag not in df.columns:
+                poi_counts[tag] = 0
             poi_counts[tag] = df[tag].notnull().sum()
         else:
-            for sub_tag in value:
+            sub_tags = value if isinstance(value, list) else [value]
+            for sub_tag in sub_tags:
                 poi_counts[f"{tag}:{sub_tag}"] = (df[tag] == sub_tag).sum()
 
     return poi_counts
