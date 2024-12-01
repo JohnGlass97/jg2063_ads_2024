@@ -52,11 +52,11 @@ def create_connection(user: str, password: str, host: str, database: str, port=3
 def get_df_from_query(conn: pymysql.Connection, query: str) -> pd.DataFrame:
     """Run a query on the database and return the result as a pandas dataframe."""
 
-    cur = conn.cursor()
-    cur.execute(query)
-    rows = cur.fetchall()
-    df = pd.DataFrame(rows, columns=[x[0].split(".")[-1]
-                      for x in cur.description])
+    with conn.cursor() as cur:
+        cur.execute(query)
+        rows = cur.fetchall()
+        df = pd.DataFrame(rows, columns=[x[0].split(".")[-1]
+                                         for x in cur.description])
     return df
 
 
@@ -66,43 +66,43 @@ def housing_upload_join_data(conn: pymysql.Connection, year: int) -> None:
     start_date = str(year) + "-01-01"
     end_date = str(year) + "-12-31"
 
-    cur = conn.cursor()
-    print("Selecting data for year: " + str(year))
-    cur.execute("""SELECT pp.price, pp.date_of_transfer, po.postcode, pp.property_type, pp.new_build_flag, pp.tenure_type,
-                pp.locality, pp.town_city, pp.district, pp.county, po.country, po.latitude, po.longitude
-                FROM (
-                    SELECT price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality, town_city,
-                    district, county FROM pp_data """ +
-                f"WHERE date_of_transfer BETWEEN {start_date} AND {end_date}" +
-                ") AS pp INNER JOIN postcode_data AS po ON pp.postcode = po.postcode")
-    rows = cur.fetchall()
+    with conn.cursor() as cur:
+        print("Selecting data for year: " + str(year))
+        cur.execute("""SELECT pp.price, pp.date_of_transfer, po.postcode, pp.property_type, pp.new_build_flag, pp.tenure_type,
+                    pp.locality, pp.town_city, pp.district, pp.county, po.country, po.latitude, po.longitude
+                    FROM (
+                        SELECT price, date_of_transfer, postcode, property_type, new_build_flag, tenure_type, locality, town_city,
+                        district, county FROM pp_data """ +
+                    f"WHERE date_of_transfer BETWEEN {start_date} AND {end_date}" +
+                    ") AS pp INNER JOIN postcode_data AS po ON pp.postcode = po.postcode")
+        rows = cur.fetchall()
 
-    csv_file_path = "output_file.csv"
+        csv_file_path = "output_file.csv"
 
-    # Write the rows to the CSV file
-    with open(csv_file_path, 'w', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        # Write the data rows
-        csv_writer.writerows(rows)
-    print("Storing data for year: " + str(year))
-    cur.execute(f"LOAD DATA LOCAL INFILE '" + csv_file_path +
-                "' INTO TABLE `prices_coordinates_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY '' TERMINATED BY '\n';")
-    conn.commit()
+        # Write the rows to the CSV file
+        with open(csv_file_path, 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            # Write the data rows
+            csv_writer.writerows(rows)
+        print("Storing data for year: " + str(year))
+        cur.execute(f"LOAD DATA LOCAL INFILE '" + csv_file_path +
+                    "' INTO TABLE `prices_coordinates_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY '' TERMINATED BY '\n';")
+        conn.commit()
+
     print("Data stored for year: " + str(year))
 
 
 def upload_df_to_db(conn: pymysql.Connection, df: pd.DataFrame, table_name: str) -> None:
     """Upload a pandas dataframe to the database as a table."""
 
-    cur = conn.cursor()
     csv_file_path = "output_file.csv"
-
     df.to_csv(csv_file_path)
 
-    cur.execute(f"LOAD DATA LOCAL INFILE '{csv_file_path}' INTO TABLE `{table_name}` " +
-                "FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY " +
-                "'' TERMINATED BY '\n';")
-    conn.commit()
+    with conn.cursor() as cur:
+        cur.execute(f"LOAD DATA LOCAL INFILE '{csv_file_path}' INTO TABLE `{table_name}` " +
+                    "FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY " +
+                    "'' TERMINATED BY '\n';")
+        conn.commit()
 
 
 def fetch_pois(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0):
