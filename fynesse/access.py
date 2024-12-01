@@ -96,7 +96,7 @@ def upload_df_to_db(conn: pymysql.Connection, df: pd.DataFrame, table_name: str)
     """Upload a pandas dataframe to the database as a table."""
 
     csv_file_path = "output_file.csv"
-    df.to_csv(csv_file_path)
+    df.to_csv(csv_file_path, header=False)
 
     with conn.cursor() as cur:
         cur.execute(f"LOAD DATA LOCAL INFILE '{csv_file_path}' INTO TABLE `{table_name}` " +
