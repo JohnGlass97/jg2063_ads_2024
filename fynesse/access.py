@@ -6,6 +6,7 @@ import requests
 import osmnx as ox
 import multiprocessing as mp
 import pandas as pd
+import osmium
 
 from .config import *
 
@@ -301,3 +302,44 @@ def fetch_output_area_data() -> pd.DataFrame:
         "FID", axis=1).set_index("OA21CD")
 
     return oa_data_df
+
+
+class PbfTagFilterHandler(osmium.SimpleHandler):
+    def __init__(self, tag_set: set[str]):
+        super().__init__()
+        self.osm_features = []
+        self._tag_set = tag_set
+
+    def node(self, x):
+        self._process_element(x)
+
+    def way(self, x):
+        self._process_element(x)
+
+    def relation(self, x):
+        self._process_element(x)
+
+    def _process_element(self, x):
+        if not (hasattr(x, "location") and x.location.valid):
+            return
+        for k, v in dict(x.tags).items():
+            for include_sub_tag in [True, False]:
+                tag = f"{k}:{v}" if include_sub_tag else k
+
+                if tag in self._tag_set:
+                    self.osm_features.append({
+                        "id": x.id,
+                        "latitude": x.location.lat,
+                        "longitude": x.location.lon,
+                        "tag": tag,
+                    })
+
+
+def pbf_to_dataframe(pbf_file: str, filter_tag_set: set[str]) -> pd.DataFrame:
+    """Convert a PBF file to a pandas dataframe filtering with the given tags."""
+
+    handler = PbfTagFilterHandler(filter_tag_set)
+    handler.apply_file(pbf_file)
+
+    df = pd.DataFrame(handler.osm_features).set_index("id")
+    return df
