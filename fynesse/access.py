@@ -105,6 +105,21 @@ def upload_df_to_db(conn: pymysql.Connection, df: pd.DataFrame, table_name: str)
         conn.commit()
 
 
+def tag_dict_to_tag_set(tags: dict) -> set:
+    """Convert a dictionary of tags to a set of tags."""
+
+    tag_set = set()
+    for tag, value in tags.items():
+        if value == True:
+            tag_set.add(tag)
+        else:
+            sub_tags = value if isinstance(value, list) else [value]
+            for sub_tag in sub_tags:
+                tag_set.add(f"{tag}:{sub_tag}")
+
+    return tag_set
+
+
 def fetch_pois(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0):
     """
     Fetch Points of Interest (POIs) near a given pair of coordinates within a specified distance.
