@@ -31,7 +31,6 @@ def count_pois_near_coordinates(pois, tags: dict) -> dict:
     Args:
         pois (gdf): Points of interest.
         tags (dict): A dictionary of OSM tags to filter the POIs (e.g., {'amenity': True, 'tourism': True}).
-        distance_km (float): The distance around the location in kilometers. Default is 1 km.
     Returns:
         dict: A dictionary where keys are the OSM tags and values are the counts of POIs for each tag.
     """
@@ -40,9 +39,10 @@ def count_pois_near_coordinates(pois, tags: dict) -> dict:
     poi_counts = {}
 
     for tag, value in tags.items():
+        if tag not in df.columns:
+            poi_counts[tag] = 0
+            continue
         if value == True:
-            if tag not in df.columns:
-                poi_counts[tag] = 0
             poi_counts[tag] = df[tag].notnull().sum()
         else:
             sub_tags = value if isinstance(value, list) else [value]
