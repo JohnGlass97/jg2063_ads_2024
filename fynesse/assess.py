@@ -72,6 +72,18 @@ def plot_distance_matrix_heatmap(names, data, label):
     plt.show()
 
 
+def plot_feature_corr_heatmap(X: pd.DataFrame, figsize: tuple):
+    """Plot a heatmap of the correlation between features."""
+
+    plt.figure(figsize=figsize)
+    ax = sns.heatmap(X.corr(), annot=True,
+                     cmap="viridis", cbar=True, fmt=".2f")
+    ax.set_xticklabels(X.columns)
+    ax.set_yticklabels(X.columns)
+    plt.title("Feature Correlation")
+    plt.show()
+
+
 def join_osm_data_to_pp_data(osm_data, pp_data):
     """Join OSM data and PP data on housenumber, street, and postcode"""
 
