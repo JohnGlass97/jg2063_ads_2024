@@ -295,7 +295,11 @@ def fetch_age_bands(level: str) -> pd.DataFrame:
     age_df = load_census_data("TS007", level)
     age_df = age_df.iloc[:, [1, 2, 3, 4, 10, 16, 23, 28, 34,
                              45, 61, 77, 88, 99, 115]].set_index("geography")
-    age_df.columns = [x.replace("Age: ", "") for x in age_df.columns]
+
+    age_df.columns = [x.replace("Aged ", "") for x in age_df.columns]
+    age_df.columns = [x.replace("; measures: Value", "")
+                      for x in age_df.columns]
+
     return age_df
 
 
