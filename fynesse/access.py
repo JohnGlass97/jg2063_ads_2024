@@ -297,6 +297,7 @@ def fetch_age_bands(level: str) -> pd.DataFrame:
                              45, 61, 77, 88, 99, 115]].set_index("geography")
 
     age_df.columns = [x.replace("Aged ", "") for x in age_df.columns]
+    age_df.columns = [x.replace("Age: ", "") for x in age_df.columns]
     age_df.columns = [x.replace("; measures: Value", "")
                       for x in age_df.columns]
 
