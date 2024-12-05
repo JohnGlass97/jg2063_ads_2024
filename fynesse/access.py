@@ -263,6 +263,18 @@ def fetch_age_distributions(level: str) -> pd.DataFrame:
     return age_df
 
 
+def fetch_age_bands(level: str) -> pd.DataFrame:
+    """Fetch the age band data from the 2021 census."""
+
+    download_census_data("TS007")  # Age by bands
+
+    age_df = load_census_data("TS007", level)
+    age_df = age_df.iloc[:, [1, 2, 3, 4, 10, 16, 23, 28, 34,
+                             45, 61, 77, 88, 99, 115]].set_index("geography")
+    age_df.columns = [x.replace("Age: ", "") for x in age_df.columns]
+    return age_df
+
+
 def fetch_ns_sec(level: str) -> pd.DataFrame:
     """Fetch the National Statistics Socio-economic Classification (NS-SEC) data from the 2021 census."""
 
