@@ -293,7 +293,7 @@ def fetch_age_bands(level: str) -> pd.DataFrame:
     download_census_data("TS007")  # Age by bands
 
     age_df = load_census_data("TS007", level)
-    age_df = age_df.iloc[:, [1, 2, 3, 4, 10, 16, 23, 28, 34,
+    age_df = age_df.iloc[:, [1, 3, 4, 10, 16, 23, 28, 34,
                              45, 61, 77, 88, 99, 115]].set_index("geography")
 
     age_df.columns = [x.replace("Aged ", "") for x in age_df.columns]
@@ -309,7 +309,8 @@ def fetch_ns_sec(level: str) -> pd.DataFrame:
     download_census_data("TS062")
 
     ns_sec_df = load_census_data("TS062", level)
-    ns_sec_df = ns_sec_df.drop("date", axis=1).set_index("geography")
+    ns_sec_df = ns_sec_df.drop(
+        ["date", "geography code"], axis=1).set_index("geography")
     ns_sec_df.columns = [x.replace(
         "National Statistics Socio-economic Classification (NS-SEC): ", "") for x in ns_sec_df.columns]
     return ns_sec_df
