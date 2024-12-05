@@ -224,13 +224,8 @@ def get_buildings_with_addresses(bbox: tuple):
     return with_address
 
 
-def download_census_data(code: str, base_dir="") -> None:
-    """Download the 2021 census data for the given code and extract it to the base directory."""
-
-    url = "https://www.nomisweb.co.uk/output/census/2021/census2021-" + \
-        f"{code.lower()}.zip"
-    extract_dir = os.path.join(
-        base_dir, os.path.splitext(os.path.basename(url))[0])
+def download_zip_data(url: str, extract_dir) -> None:
+    """Download a zip file from the given URL and extract it to the given directory."""
 
     if os.path.exists(extract_dir) and os.listdir(extract_dir):
         print(f"Files already exist at: {extract_dir}.")
@@ -244,6 +239,17 @@ def download_census_data(code: str, base_dir="") -> None:
         zip_ref.extractall(extract_dir)
 
     print(f"Files extracted to: {extract_dir}")
+
+
+def download_census_data(code: str, base_dir="") -> None:
+    """Download the 2021 census data for the given code and extract it to the base directory."""
+
+    url = "https://www.nomisweb.co.uk/output/census/2021/census2021-" + \
+        f"{code.lower()}.zip"
+    extract_dir = os.path.join(
+        base_dir, os.path.splitext(os.path.basename(url))[0])
+
+    download_zip_data(url, extract_dir)
 
 
 def load_census_data(code: str, level: str) -> pd.DataFrame:
