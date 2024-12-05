@@ -241,6 +241,24 @@ def download_zip_data(url: str, extract_dir) -> None:
     print(f"Files extracted to: {extract_dir}")
 
 
+def fetch_postcode_mappings(levels: list[str]) -> pd.DataFrame:
+    """Fetch the mappings from postcodes to the given levels."""
+
+    download_zip_data(
+        "https://www.arcgis.com/sharing/rest/content/items/ea2f70bb71a54d818232e987cc1d28b9/data",
+        "postcode_mappings")
+
+    file_path = "postcode_mappings/pcd_oa_lsoa_msoa_ltla_utla_rgn_ctry_ew_may_2021_lu_v2.csv"
+    postcode_mappings_df = pd.read_csv(file_path)
+
+    all_cols = list(postcode_mappings_df.columns)
+    cols = ["pcd"] + \
+        [c for c in all_cols if any([c.startswith(l) for l in levels])]
+    postcode_mappings_df = postcode_mappings_df[cols]
+
+    return postcode_mappings_df
+
+
 def download_census_data(code: str, base_dir="") -> None:
     """Download the 2021 census data for the given code and extract it to the base directory."""
 
