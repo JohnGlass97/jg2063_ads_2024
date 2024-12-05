@@ -253,9 +253,11 @@ def fetch_postcode_mappings(levels: list[str]) -> pd.DataFrame:
 
     all_cols = list(postcode_mappings_df.columns)
     cols = ["pcd"] + \
-        [c for c in all_cols if any([c.startswith(l) for l in levels])]
-    postcode_mappings_df = postcode_mappings_df[cols].set_index("pcd")
+        [c for c in all_cols
+         if any([c.startswith(l) for l in levels])
+         and not c.endswith("nmw")]
 
+    postcode_mappings_df = postcode_mappings_df[cols].set_index("pcd")
     return postcode_mappings_df
 
 
