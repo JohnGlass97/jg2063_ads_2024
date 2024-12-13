@@ -130,3 +130,13 @@ def join_osm_data_to_pp_data(osm_data, pp_data):
         merged["housenumber"] <= merged["max"])]
 
     return merged
+
+
+def drop_empty(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """Drop rows with empty values in any of the specified columns."""
+
+    filtered_df = df.copy()
+    filtered_df[columns] = filtered_df[columns].replace("", pd.NA)
+    filtered_df = filtered_df.dropna(subset=columns)
+
+    return filtered_df
