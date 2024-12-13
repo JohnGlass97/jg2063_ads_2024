@@ -1,6 +1,7 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 
 from .config import *
@@ -147,3 +148,15 @@ def plot_week_day_pie_chart(series: pd.Series):
 
     week_day_counts = series.dt.day_name().value_counts()
     plt.pie(week_day_counts, labels=list(week_day_counts.index))
+
+
+def plot_median_y_per_x_bin(x: pd.Series, y: pd.Series, bin_count: int):
+    """Plot the median y value for each bin of x values."""
+
+    bins = np.linspace(x.min(), x.max(), bin_count + 1)
+
+    x_binned = pd.cut(x, bins=bins, labels=bins[1:], include_lowest=True)
+    median_ys = y.groupby(x_binned, observed=True).median()
+
+    plt.plot(median_ys.index, median_ys)
+    plt.show()
