@@ -38,6 +38,7 @@ REQUIRED = [
     "seaborn",
     "scikit-learn",
     "osmium",
+    "statsmodels",
 ]
 
 # What packages are optional?
