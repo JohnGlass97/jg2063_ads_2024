@@ -140,3 +140,10 @@ def drop_empty(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     filtered_df = filtered_df.dropna(subset=columns)
 
     return filtered_df
+
+
+def plot_week_day_pie_chart(series: pd.Series):
+    """Plot a pie chart of the counts of each day of the week."""
+
+    week_day_counts = series.dt.day_name().value_counts()
+    plt.pie(week_day_counts, labels=list(week_day_counts.index))
