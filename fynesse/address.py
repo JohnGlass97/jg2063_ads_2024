@@ -5,6 +5,8 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import KFold
 
+# This file contains code for suporting addressing questions in the data
+
 
 def mae_and_rmse(true, pred) -> tuple:
     """Return the mean absolute error and root mean squared error in a tuple."""
